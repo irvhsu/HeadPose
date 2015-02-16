@@ -1,4 +1,4 @@
-#  HeadPose
+#  HeadPose Estimation
 
 **Team Members**: Irving Hsu, Amani Peddada, Harvy Hu
 
