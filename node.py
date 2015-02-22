@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from patch import Patch
 
 ##############################################################
@@ -6,7 +7,8 @@ from patch import Patch
 ##############################################################
 
 class Node:
-	def __init__(self, patches=None, isLeaf=False):
+	def __init__(self, depth, patches=None, isLeaf=False):
+		self.depth = depth
 		self.isLeaf = isLeaf
 		self.children = None
 		self.binary_test = None
@@ -19,7 +21,32 @@ class Node:
 
 	# Computes the entropy for the node
 	def computeEntropy(self):
-		pass
+		offset_cov, angle_cov = self.getCovariances()
+		entropy = np.log(np.linalg.det(offset_cov) + np.linalg.det(angle_cov))
+		return entropy
+
+	# Get covariance for theta offsets and theta angles
+	def getCovariances(self):
+		offset_cov = np.cov(self.theta_offsets)    # Covariance for theta offsets
+		angle_cov = np.cov(self.theta_angles)      # Covariance for theta angles
+		return offset_cov, angle_cov
+
+	# Get mean for theta offsets and theta angles
+	def getMeans(self):
+		 return np.mean(self.theta_offsets), np.mean(self.theta_angles)
+
+	# Get theta offsets and theta angles
+	def getParams(self):
+		theta_offsets = []
+		theta_angles = []
+		for patch in self.patches:
+			theta_offsets.append(patch.theta_offsets)
+			theta_angles.append(patch.theta_angles)
+		theta_offsets = np.concatenate(tuple(theta_offsets), axis=1)
+		theta_angles = np.concatenate(tuple(theta_angles), axis=1)
+		self.theta_offsets = theta_offsets
+		self.theta_angles = theta_angles
+
 
 	# Returns a list (size = 2) of candidate children based on the
 	# results of running the binary test
@@ -40,4 +67,3 @@ class Node:
 		candidates = np.array([left_node, right_node])
 
 		return candidates
-
