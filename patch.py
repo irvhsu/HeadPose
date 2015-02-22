@@ -5,20 +5,22 @@ import numpy as np
 ##############################################################
 
 class Patch:
-	def __init__(self, theta_offsets, theta_angles, isFromHead, data):
+	def __init__(self, data, theta_offsets=None, theta_angles=None, isFromHead=False):
 		# The offset x, y, and z to the center of the head
-		[x, y, z] = theta_offsets
-		
-		self.x = x
-		self.y = y
-		self.z = z
+		if theta_offsets:
+			[x, y, z] = theta_offsets
+			
+			self.x = x
+			self.y = y
+			self.z = z
 
 		# The angles of the corresponding head
-		[yaw, pitch, roll] = theta_angles
+		if theta_angles:		
+			[yaw, pitch, roll] = theta_angles
 
-		self.yaw = yaw
-		self.pitch = pitch
-		self.roll = roll 
+			self.yaw = yaw
+			self.pitch = pitch
+			self.roll = roll 
 
 		# Whether or not the patch is from the head
 		self.isFromHead = isFromHead
@@ -48,4 +50,6 @@ class Patch:
 
 		return f1_data, f2_data
 
+
+	
 
