@@ -26,7 +26,7 @@ class Tree:
     self.rate_change = rate_change
     
     # Number of randomly generated binary tests per node
-    self.num_tests = 100
+    self.num_tests = 1000
 
     # Create a new tree if no tree is passed in
     self.root_node = root_node

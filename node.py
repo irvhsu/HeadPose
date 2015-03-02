@@ -70,7 +70,7 @@ class Node:
         right_patches = np.append(right_patches, patch)
       else:
         left_patches = np.append(left_patches, patch)
-    if len(left_patches) > 0 and len(right_patches > 0):
+    if len(left_patches) > 0 and len(right_patches) > 0:
       left_node = Node(patches=left_patches)
       right_node = Node(patches=right_patches)
       candidates = np.array([left_node, right_node])
