@@ -25,10 +25,7 @@ class Node:
   # Computes the entropy for the node
   def computeEntropy(self):
     offset_cov, angle_cov = self.getCovariances()
-    print np.linalg.det(offset_cov)
-    print np.linalg.det(angle_cov)
     entropy = np.log(np.linalg.det(offset_cov) + np.linalg.det(angle_cov))
-    print entropy
     return entropy
 
   # Get covariance for theta offsets and theta angles
@@ -39,7 +36,7 @@ class Node:
 
   # Get mean for theta offsets and theta angles
   def getMeans(self):
-   return np.mean(self.theta_offsets), np.mean(self.theta_angles)
+   return np.mean(self.theta_offsets, axis=1), np.mean(self.theta_angles, axis=1)
 
   # Get theta offsets and theta angles
   def getParams(self):
@@ -55,7 +52,7 @@ class Node:
     
   # Returns the fraction of patches within the node that were taken from the head
   def getPercentFromHead(self):
-    patchClasses = np.array([1 if patch.isFromHead else 0 for patch in self.patches])
+    patchClasses = np.array([1 if patch.is_from_head else 0 for patch in self.patches])
     return np.mean(patchClasses)       
 
 
