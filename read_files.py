@@ -1,8 +1,11 @@
 import numpy as np
 import scipy.io
+import os.path
 
 # Read in a depth image, return as an array of values
 def readDepthImage(pathname):
+	if not os.path.isfile(pathname):
+		return None
 	f = open(pathname, "rb")
 	width =	np.fromfile(f, dtype=np.int32, count=1)
 	height = np.fromfile(f, dtype=np.int32, count=1)
@@ -31,7 +34,7 @@ def readDepthImage(pathname):
 
 
 # Given a folder, frame number, and extension, returns the complete pathname
-def getDepthPathname(folder, frame, extension):
+def getPathname(folder, frame, extension):
 	num_zeros = 3 - len(str(frame))
 	zeros = num_zeros*'0'
 	path = '../kinect_head_pose_db/' + str(folder) + '/frame_00' + zeros + str(frame) + extension
@@ -76,3 +79,16 @@ def testReadGroundTruth(folder, frame):
 	theta_center, theta_angles = readGroundTruth(path)
 	print "Head Center: ", theta_center
 	print "Head Orientation: ", theta_angles
+
+
+# Reads in the camera matrix K from a depth.cal file (first 3 lines)
+def readCameraMatrix(folder):
+	pathname = '../kinect_head_pose_db/' + str(folder) + '/depth.cal'
+	# Initialize camera matrix
+	K = np.zeros([3, 3])
+	f = open(pathname, "r")
+	for i in range(3):
+		K[i, :] = float(f.readline().rsplit())
+	return K
+
+

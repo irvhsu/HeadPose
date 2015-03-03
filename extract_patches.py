@@ -1,24 +1,112 @@
 import numpy as np
 import scipy.io
 from patch import Patch
-from read_images import *
+from read_files import *
 
-def getAllPatches():
-	num_folders = 22
+# Gets all of the patches from all of the images within the given folders
+def getAllPatches(folder_list):
 	all_patches = []
-	for folder_num in range(num_folders):
+	for folder_num in folder_list:
 		f = open('../' + str(folder_num) + '/size.txt')
 		begin_frame = int(f.readline().rsplit())
 		end_frame = int(f.readline().rsplit())
 		f.close()
+		K = readCameraMatrix(folder_num)
 		for frame_num in range(begin_frame, end_frame + 1):
-			pathname = getPathname(folder_num, frame_num, "_depth.bin")
-			depth_image = readDepthImage(pathname)
-			curr_image_patches = getPatchesFromImage(depth_image)
+			# Pathname for depth image
+			depth_pathname = getPathname(folder_num, frame_num, "_depth.bin")
+			depth_image = readDepthImage(depth_pathname)
+			if depth_image is None:
+				continue
+			# Pathname for ground truth
+			gt_pathname = getPathname(folder_num, frame_num, "_pose.txt")
+			theta_center, theta_angles = readGroundTruth(gt_pathname)
+
+			# Get all patches from the current image
+			curr_image_patches = getPatchesFromImage(depth_image, theta_center, theta_angles, K)
 			all_patches.append(curr_image_patches)
-	return all_patches
+
+	return np.concatenate(all_patches)
 
 
-def getPatchesFromImage(depth_image):
-	depth_image = np.reshape(depth_image, [480, 640])
+# Samples 20 patches from an image in a folder: 10 positive, 10 negative
+# All patches must contain at least one non-zero pixel. Positive patches
+# satisfy the heuristic: distance from center of patch to center of head
+# is within 10 mm
+def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
+	# Negative and positive patches
+	negative_patches = []
+	positive_patches = []
+	# Height and width of image
+	height = 480
+	width = 640
+
+	# Height and width of patch
+	patch_height = 100
+	patch_width = 100
+	
+	# Stride of patch sampling window
+	stride = 5
+
+	# Threshold used for heuristic (mm)
+	threshold = 10
+
+	# Number of samples (same for both positive and negative patches)
+	num_samples = 10
+
+	# Image data
+	depth_image = np.reshape(depth_image, [height, width])
+	
+	# Number of patches sampled from a row
+	num_patches_in_row = (width - patch_width) / stride + 1
+
+	# Number of patches sampled from a column
+	num_patches_in_column = (height - patch_height) / stride + 1
+
+	for i in range(num_patches_in_column):
+		for j in range(num_patches_in_row):
+			# Extract patch from depth image based on position of window
+			current_patch = depth_image[i*5 : i*5 + patch_height, j*5 : j*5 + patch_width]
+			if not isValidPatch(current_patch):
+				continue
+
+			# Get depth of center pixel of patch
+			u = np.floor(patch_height/2)
+			v = np.floor(patch_width/2)
+
+			# Get x, y, z coordinates of center pixel from its depth
+			center_pixel_z = current_patch[u, v]
+			center_pixel_x = center_pixel_z * (u - K[0, 2])/K[0, 0]
+			center_pixel_y = center_pixel_z * (v - K[1, 2])/K[1, 1]
+
+			# Get vector pointing from center of patch to center of head
+			theta_offsets = theta_center - np.array([center_pixel_x, center_pixel_y, center_pixel_z])
+
+			# Get distance by taking norm of theta_offsets
+			distance = np.linalg.norm(theta_offsets)
+
+			is_from_head = (distance <= threshold)
+			new_patch = Patch(data=current_patch, theta_offsets=theta_offsets,
+							  theta_angles=theta_angles, is_from_head=is_from_head)
+
+			if isFromHead:
+				positive_patches.append(new_patch)
+			else:
+				negative_patches.append(new_patch)
+
+	num_positive_patches = max(num_samples, len(positive_patches))
+	num_negative_patches = max(num_samples, len(negative_patches))
+
+	# Randomly sample positive and negative patches from respective lists
+	rand_positive_patches = np.random.choice(positive_patches, replace=False, size=num_positive_patches)
+	rand_negative_patches = np.random.choice(negative_patches, replace=False, size=num_negative_patches)
+
+	return np.concatenate((rand_positive_patches, rand_negative_patches))
+
+
+# Determines if the given patch is a valid patch (i.e., at least one pixel > 0)
+def isValidPatch(patch):
+	return np.sum(patch) > 0
+
+
 
