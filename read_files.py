@@ -38,6 +38,7 @@ def getPathname(folder, frame, extension):
 	num_zeros = 3 - len(str(frame))
 	zeros = num_zeros*'0'
 	path = '../kinect_head_pose_db/' + str(folder) + '/frame_00' + zeros + str(frame) + extension
+	return path
 
 
 # Test readDepthImage functionality
@@ -88,7 +89,8 @@ def readCameraMatrix(folder):
 	K = np.zeros([3, 3])
 	f = open(pathname, "r")
 	for i in range(3):
-		K[i, :] = float(f.readline().rsplit())
+		line = f.readline().rsplit()
+		K[i, :] = np.array([float(x) for x in line])
 	return K
 
 
