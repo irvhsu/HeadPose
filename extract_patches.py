@@ -12,6 +12,7 @@ def getAllPatches(folder_list):
         end_frame = int(f.readline().rsplit()[0])
         f.close()
         K = readCameraMatrix(folder_num)
+        print "K: ", K
         for frame_num in range(begin_frame, end_frame + 1):
             # Pathname for depth image
             depth_pathname = getPathname(folder_num, frame_num, "_depth.bin")
@@ -49,7 +50,7 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
     stride = 1
 
     # Threshold used for heuristic (mm)
-    threshold = 100
+    threshold = 10
 
     # Number of samples (same for both positive and negative patches)
     num_samples = 10
@@ -66,11 +67,9 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
     for i in range(num_patches_in_column):
         for j in range(num_patches_in_row):
             # Extract patch from depth image based on position of window
-            current_patch = depth_image[i*5 : i*5 + patch_height, j*5 : j*5 + patch_width]
+            current_patch = depth_image[i*stride : (i*stride + patch_height), j*stride : (j*stride + patch_width)]
             if not isValidPatch(current_patch):
                 continue
-
-            print "Current patch shape: ", current_patch.shape
 
             # Get depth of center pixel of patch
             u = np.floor(patch_height/2)
@@ -86,8 +85,7 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
 
             # Get distance by taking norm of theta_offsets
             distance = np.linalg.norm(theta_offsets)
-
-            is_from_head = (distance <= threshold)
+            is_from_head = (distance <= 75*threshold)
             new_patch = Patch(data=current_patch, theta_offsets=theta_offsets,
                                 theta_angles=theta_angles, is_from_head=is_from_head)
 
