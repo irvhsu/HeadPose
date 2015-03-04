@@ -76,3 +76,14 @@ class Node:
       candidates = np.array([left_node, right_node])
 
     return candidates
+
+  # Given a binary test, determine which child the patch goes to
+  def testPatch(self, patch):
+  	f1_corners, f2_corners, tau = self.binary_test['f1'], self.binary_test['f2'], self.binary_test['tau']
+    f1_data, f2_data = patch.getSubPatches(f1_corners, f2_corners)
+    meanDiff = patch.getSubPatchMeanDiff(f1_data, f2_data)
+    # 0: left child; 1: right child
+    result = 1 if meanDiff > tau else 0
+    return result
+
+
