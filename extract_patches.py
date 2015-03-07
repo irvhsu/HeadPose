@@ -14,6 +14,8 @@ def getAllPatches(folder_list):
         K = readCameraMatrix(folder_num)
         print "K: ", K
         for frame_num in range(begin_frame, end_frame + 1):
+            print "Image: ", frame_num
+
             # Pathname for depth image
             depth_pathname = getPathname(folder_num, frame_num, "_depth.bin")
             depth_image = readDepthImage(depth_pathname)
@@ -50,7 +52,7 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
     stride = 1
 
     # Threshold used for heuristic (mm)
-    threshold = 10
+    threshold = 50
 
     # Number of samples (same for both positive and negative patches)
     num_samples = 10
@@ -71,21 +73,27 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
             if not isValidPatch(current_patch):
                 continue
 
-            # Get depth of center pixel of patch
-            u = np.floor(patch_height/2)
-            v = np.floor(patch_width/2)
+            # Get location of center pixel of patch
+            u = i*stride + np.floor(patch_height/2)
+            v = j*stride + np.floor(patch_width/2)
 
             # Get x, y, z coordinates of center pixel from its depth
-            center_pixel_z = current_patch[u, v]
-            center_pixel_x = center_pixel_z * (u - K[0, 2])/K[0, 0]
-            center_pixel_y = center_pixel_z * (v - K[1, 2])/K[1, 1]
+            center_pixel_z = depth_image[u, v] # Depth
+            if center_pixel_z <= 0:
+                continue
+            center_pixel_x = center_pixel_z * (v - K[0, 2])/K[0, 0]
+            center_pixel_y = center_pixel_z * (u - K[1, 2])/K[1, 1]
 
             # Get vector pointing from center of patch to center of head
-            theta_offsets = theta_center - np.array([center_pixel_x, center_pixel_y, center_pixel_z])
-
+            theta_patch_center = np.array([center_pixel_x, center_pixel_y, center_pixel_z])
+            theta_offsets = theta_center - theta_patch_center
+            theta_offsets = np.reshape(theta_offsets, [3, 1])
+            
             # Get distance by taking norm of theta_offsets
             distance = np.linalg.norm(theta_offsets)
-            is_from_head = (distance <= 75*threshold)
+
+            # print distance
+            is_from_head = (distance <= threshold)
             new_patch = Patch(data=current_patch, theta_offsets=theta_offsets,
                                 theta_angles=theta_angles, is_from_head=is_from_head)
 

@@ -3,6 +3,14 @@ import scipy.io
 import os.path
 
 # Read in a depth image, return as an array of values
+# The file format is as follows: The first two lines
+# are the width and height of the depth image, respectively.
+# The rest of the file consists of a "num_empty" counter
+# that represents how many 0's representing the segmented out
+# background should be inserted, followed by a "num_full" counter
+# that represents how many foreground values are to follow. The file
+# is thus simply a repeat of num_empty, followed by num_full and the
+# foreground values.
 def readDepthImage(pathname):
 	if not os.path.isfile(pathname):
 		return None
@@ -13,21 +21,28 @@ def readDepthImage(pathname):
 	# Init empty depth image
 	depth_img = np.zeros([height * width])
 	
+
 	num_empty = 0
 	num_full = 0
 	p = 0
 
+	num_empty_sum = 0
+	num_full_sum = 0
 	# For every pixel in the image
 	while (p < width * height):
+
 		num_empty = np.fromfile(f, dtype=np.int32, count=1)
 		for i in range(num_empty):
-			depth_img[p + i] = 0
+			depth_img[p + i] = np.int16(0)
+		p += num_empty
 
 		num_full = np.fromfile(f, dtype=np.int32, count=1)
-		depth_img[p + num_empty] = np.fromfile(f, dtype=np.int16, count=num_full)
-		p += num_empty + num_full
+		for i in range(num_full):
+			depth_img[p + i] = np.fromfile(f, dtype=np.int16, count=1)
+		p += num_full
 
 	f.close()
+
 
 	# Return the resulting depth image
 	return depth_img
