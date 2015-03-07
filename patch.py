@@ -5,7 +5,7 @@ import numpy as np
 ##############################################################
 
 class Patch:
-  def __init__(self, data, theta_offsets=None, theta_angles=None, is_from_head=False):
+  def __init__(self, data, theta_offsets=None, theta_angles=None, is_from_head=False, center_coords=None):
     # The offset x, y, and z to the center of the head
     self.theta_offsets = theta_offsets
         
@@ -23,6 +23,9 @@ class Patch:
         
     # Stores the height of the patch
     self.height = self.data.shape[0]
+
+    # Stores the xyz-location (in the world-coordinate system) of the center pixel of the patch
+    self.center_coords = center_coords
 
 
   def getSubPatchMeanDiff(self, matrix1, matrix2):

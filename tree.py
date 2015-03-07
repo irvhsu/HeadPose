@@ -2,6 +2,7 @@ import numpy as np
 import random
 from patch import Patch
 from node import Node
+from vote import Vote
 
 ##############################################################
 # Class: Tree
@@ -150,16 +151,30 @@ class Tree:
   # Given a patch, propogate it down the tree to a leaf
   # Output the mean of the leaf's distribution of parameters only if certain conditions are met
   def testPatch(self, patch, threshold):
+
+    # Start from root node
     current_node = self.root_node
+
+    # Iteratively proceed down the tree until reaching a leaf
     while not current_node.isLeaf:
+
+      # Figure out which child to go to (0 is left, 1 is right)
       next_node_index = current_node.testPatch(patch)
+
+      # Move to this node
       current_node = current_node.children[next_node_index]
+
     # Return the current node's parameters if and only if all the patches in the leaf
     # are from the head and if trace(cov) < threshold
     offset_cov, angle_cov = current_node.getCovariances()
+
     cov_trace_sum = np.trace(offset_cov) + np.trace(angle_cov)
+
     if current_node.getPercentFromHead() == 1 and cov_trace_sum < threshold:
       # Get mean for theta offsets and theta angles
-      return current_node.getMeans()
+      mean_offset, mean_angles = current_node.getMeans()
+      predicted_center = mean_offset + patch.center_coords
+      vote = Vote(theta_center=predicted_center, theta_angles=mean_angles)
+      return vote
     return None
 
