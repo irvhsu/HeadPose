@@ -40,9 +40,9 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
     # Negative and positive patches
     negative_patches = []
     positive_patches = []
-    # Height and width of image
-    height = 480
-    width = 640
+
+    image_width = depth_image.shape[1]
+    image_height = depth_image.shape[0]
 
     # Height and width of patch
     patch_height = 100
@@ -57,14 +57,11 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
     # Number of samples (same for both positive and negative patches)
     num_samples = 10
 
-    # Image data
-    depth_image = np.reshape(depth_image, [height, width])
-    
     # Number of patches sampled from a row
-    num_patches_in_row = (width - patch_width) / stride + 1
+    num_patches_in_row = (image_width - patch_width) / stride + 1
 
     # Number of patches sampled from a column
-    num_patches_in_column = (height - patch_height) / stride + 1
+    num_patches_in_column = (image_height - patch_height) / stride + 1
 
     for i in range(num_patches_in_column):
         for j in range(num_patches_in_row):

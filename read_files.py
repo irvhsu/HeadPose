@@ -20,7 +20,6 @@ def readDepthImage(pathname):
 
 	# Init empty depth image
 	depth_img = np.zeros([height * width])
-	
 
 	num_empty = 0
 	num_full = 0
@@ -43,6 +42,8 @@ def readDepthImage(pathname):
 
 	f.close()
 
+	# Reshape into a matrix
+	depth_img = np.reshape(depth_img, [height, width])
 
 	# Return the resulting depth image
 	return depth_img
