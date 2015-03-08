@@ -28,8 +28,9 @@ def getForestEstimate(forest, depth_image, K):
             all_votes.append(new_vote)
 
     # Use the collected votes to predict the overall estimate; return this value
-    final_vote = getFinalVote(all_votes)
-    return final_vote
+    # final_votes: final centroids
+    final_votes = getFinalVote(np.array(all_votes), forest.num_trees)
+    return final_votes
 
 # Extract patches from image
 def getPatches(depth_image, K):
@@ -89,8 +90,147 @@ def getPatches(depth_image, K):
     rand_patches = np.random.choice(all_patches, replace=False, size=num_patches)
     return rand_patches
 
-def getFinalVote(all_votes):
-    pass
+
+def getFinalVote(all_votes, num_trees):
+    # Head threshold: used to determine minimum number of votes in each cluster
+    # (to classify cluster of votes as a head)
+    current_clusters, current_centroids = getClusters(all_votes)
+    
+    stride = 1.0
+    beta = 400
+    # Threshold denoting number of votes a cluster should have to be considered
+    threshold = beta * num_trees/(stride ** 2)
+
+    mean_shift_clusters, mean_shift_centroids = performMeanShift(current_clusters, current_centroids, threshold)
+    final_clusters, final_centroids = computeFinalParams(mean_shift_clusters, mean_shift_centroids, threshold)
+    return final_centroids
 
 
+def getClusters(all_votes):
+    # Number of parameters for theta: center coordinates, and orientation
+    # theta_size = 6
+    
+    # Initialize current centroids to be empty; append to later using vstack
+    # current_centroids = np.zeros([0, theta_size])
+    current_centroids = np.array([])
+
+    # List of clusters, where each cluster consists of an np.array of votes
+    # current_clusters is the same size as current_centroids
+    current_clusters = []
+
+    # Max clusters
+    max_clusters = 20
+
+    # Average face diameter
+    average_face_diameter = 236.4
+
+    # Radius for clustering votes
+    max_distance_to_centroid = (average_face_diameter ** 2)
+
+    # For every vote
+    for vote in all_votes:
+        cluster_found = False
+        best_distance = float('Inf')
+        # Index of best cluster
+        best_cluster = 0
+
+        # For every cluster
+        for centroid_index in range(len(current_centroids)):
+            if found: break
+            centroid = current_centroids[centroid_index]
+            difference = centroid.theta_center - vote.theta_center
+            distance = np.sum(difference ** 2)
+
+            if distance >= max_distance_to_centroid: continue
+
+            # Found a best cluster
+            best_cluster = centroid_index
+            cluster_found = True
+ 
+            current_clusters[best_cluster] = np.append(current_clusters[best_cluster], vote)
+
+            # Compute centroid parameters
+            average_center = np.mean([vote.theta_center for vote in current_clusters[best_cluster]])
+            average_angles = np.mean([vote.theta_angles for vote in current_clusters[best_cluster]])
+
+            current_centroids[best_cluster] = Vote(theta_center=average_center, theta_angles=average_angles)
+
+        if not cluster_found and len(current_clusters) < max_clusters:
+            new_cluster = np.array([])
+            new_cluster = np.append(new_cluster, vote)
+
+            current_clusters.append(new_cluster)
+            current_centroids = np.append(current_centroids, vote)
+
+    return current_clusters, current_centroids
+
+
+def performMeanShift(current_clusters, current_centroids, threshold):
+    max_mean_shift_iters = 10
+
+    # List of clusters, each of which is an np.array of votes
+    mean_shift_clusters = []
+
+    # np.array of votes
+    mean_shift_centroids = np.array([])
+    
+    # Average face diameter
+    average_face_diameter = 236.4
+
+    # Radius of sphere for mean shift: must be equal to 1/6 of the
+    # average face diameter
+    fraction_of_face = 1./6
+    mean_shift_radius2 = (fraction_of_face * average_face_diameter)**2
+    
+
+    # Perform mean shift for every cluster
+    for centroid_index in range(len(current_centroids)):
+            centroid = current_centroids[centroid_index]
+            new_cluster = np.array([])
+
+            for i in range(max_mean_shift_iters):
+                new_cluster = np.array([])
+
+                # For every vote in this cluster
+                for vote in current_clusters[centroid_index]:
+                    difference = centroid.theta_center - vote.theta_center
+                    distance = np.sum(difference ** 2)                    
+                    if distance >= mean_shift_radius2: continue
+                    new_cluster = np.append(new_cluster, vote)
+
+                # Compute means of theta centers for each vote in the new cluster
+                average_center = np.mean([vote.theta_center for vote in new_cluster])
+                average_angles = np.mean([vote.theta_angles for vote in new_cluster])
+
+                new_mean = Vote(theta_center=average_center, theta_angles=average_angles)
+                old_mean = current_centroids[centroid_index]
+                
+                difference_center = new_mean.theta_center - old_mean.theta_center
+                difference_angles = new_mean.theta_angles - old_mean.theta_angles
+
+                difference_mean = (difference_center ** 2) + (difference_angles ** 2)
+
+                current_centroids[centroid_index] = new_mean
+
+                if difference_mean < 1: break
+
+            mean_shift_clusters.append(new_cluster)
+            mean_shift_centroids.append(current_centroids[centroid_index])
+
+    return mean_shift_clusters, mean_shift_centroids
+
+
+# Computes the final parameters
+def computeFinalParams(mean_shift_clusters, mean_shift_centroids, threshold):
+    final_clusters = []
+    final_centroids = np.array([])
+
+    for cluster_index in range(len(mean_shift_clusters)):
+        cluster = mean_shift_clusters[cluster_index]
+        if len(cluster) < threshold: continue
+        centroid = mean_shift_centroids[cluster_index]
+        final_clusters.append(cluster)
+        final_centroids = np.append(final_centroids, centroid)
+
+    return final_clusters, final_centroids
 
