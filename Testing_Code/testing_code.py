@@ -81,7 +81,7 @@ def getPatches(depth_image, K):
             center_pixel_y = center_pixel_z * (u - K[1, 2])/K[1, 1]
     
             # Ignore patches consisting of less than 10% data (i.e. 90% or more is zero)
-            num_nonzero = len(current_patch[current_patch > 0])
+            num_nonzero = float(len(current_patch[current_patch > 0]))
             if num_nonzero/(patch_width*patch_height) <= .10:
                 continue
 

@@ -132,8 +132,8 @@ class Tree:
 
   # Computes the classification measure U_C to evaluate the goodness of a split
   def computeUC(self, left_child, right_child):
-    PL_size = len(left_child.patches)
-    PR_size = len(right_child.patches)
+    PL_size = float(len(left_child.patches))
+    PR_size = float(len(right_child.patches))
     left_percent_from_head = left_child.getPercentFromHead()
     right_percent_from_head = right_child.getPercentFromHead()
 
@@ -141,7 +141,7 @@ class Tree:
             PR_size*(right_percent_from_head*np.log(right_percent_from_head) + (1 - right_percent_from_head)*np.log(1 - right_percent_from_head))
     denom = PL_size + PR_size
 
-    return (numer/denom)
+    return (float(numer)/float(denom))
 
   # Computes the regression measure U_R to evaluate the goodness of a split
   def computeUR(self, current_node, left_child, right_child):
@@ -149,8 +149,8 @@ class Tree:
     left_entropy = left_child.computeEntropy()
     right_entropy = right_child.computeEntropy()
 
-    w_l = len(left_child.patches)/len(current_node.patches)
-    w_r = len(right_child.patches)/len(current_node.patches)
+    w_l = float(len(left_child.patches))/float(len(current_node.patches))
+    w_r = float(len(right_child.patches))/float(len(current_node.patches))
 
     info_gain = self_entropy - (w_l*left_entropy + w_r*right_entropy)
     return info_gain
