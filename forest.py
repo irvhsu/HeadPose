@@ -9,7 +9,7 @@ from tree import Tree
 ##############################################################
 
 class Forest:
-  def __init__(self, patches, num_trees=10):
+  def __init__(self, patches=None, num_trees=10, trees=None):
     
     # The number of trees in the forest
     self.num_trees = num_trees
@@ -20,8 +20,12 @@ class Forest:
     # A list of the individual trees in the forest
     self.trees = []
 
-    # Constructs the trees in the forest
-    self.buildForest()
+    if trees is not None:
+      self.trees = trees
+
+    if patches is not None:
+      # Constructs the trees in the forest
+      self.buildForest()
 
 
   # Populates the trees in the forest
