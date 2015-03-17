@@ -32,7 +32,7 @@ class Forest:
 
     # For every tree
     for i in range(self.num_trees):
-      print i
+      print "Tree: ", i
       # Divide data evenly between trees
       num_train_patches = np.ceil(num_patches/self.num_trees)
 

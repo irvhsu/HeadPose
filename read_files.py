@@ -109,4 +109,16 @@ def readCameraMatrix(folder):
 		K[i, :] = np.array([float(x) for x in line])
 	return K
 
+# Reads in the camera matrix K from a depth.cal file (first 3 lines)
+# Different path name for testing code within the Testing Code folder
+def readCameraMatrix2(folder):
+	pathname = '../../kinect_head_pose_db/' + str(folder) + '/depth.cal'
+	# Initialize camera matrix
+	K = np.zeros([3, 3])
+	f = open(pathname, "r")
+	for i in range(3):
+		line = f.readline().rsplit()
+		K[i, :] = np.array([float(x) for x in line])
+	return K
+
 

@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+from patch import Patch
 from forest import Forest
 from vote import Vote
 
@@ -9,8 +10,10 @@ def getForestEstimate(forest, depth_image, K):
     # Extract an array of patches from the depth image
     image_patches = getPatches(depth_image, K)
 
+    print "Num Patches Extracted: ", len(image_patches)
+
     # The max level of trace of the variance a leaf can have 
-    max_trace_variance = 800
+    max_trace_variance = 50000
 
     # The list that will hold all of the votes based on these patches
     all_votes = []
@@ -25,8 +28,9 @@ def getForestEstimate(forest, depth_image, K):
             # If the vote is not valid, continue
             if new_vote is None:
                 continue
-            all_votes.append(new_vote)
 
+            all_votes.append(new_vote)
+    print "Num Votes: ", len(all_votes)
     # Use the collected votes to predict the overall estimate; return this value
     # final_votes: final centroids
     final_votes = getFinalVote(np.array(all_votes), forest.num_trees)
@@ -34,6 +38,8 @@ def getForestEstimate(forest, depth_image, K):
 
 # Extract patches from image
 def getPatches(depth_image, K):
+
+    print "Getting Patches"
 
     all_patches = []
 
@@ -46,16 +52,16 @@ def getPatches(depth_image, K):
     patch_width = 100
 
     # Number of patches to sample
-    num_samples = 500
+    num_samples = 1000
     
     # Stride of patch sampling window
     stride = 1
     
     # Number of patches sampled from a row
-    num_patches_in_row = (width - patch_width) / stride + 1
+    num_patches_in_row = (image_width - patch_width) / stride + 1
 
     # Number of patches sampled from a column
-    num_patches_in_column = (height - patch_height) / stride + 1
+    num_patches_in_column = (image_height - patch_height) / stride + 1
 
     for i in range(num_patches_in_column):
         for j in range(num_patches_in_row):
@@ -73,22 +79,25 @@ def getPatches(depth_image, K):
                 continue
             center_pixel_x = center_pixel_z * (v - K[0, 2])/K[0, 0]
             center_pixel_y = center_pixel_z * (u - K[1, 2])/K[1, 1]
-
+    
             # Ignore patches consisting of less than 10% data (i.e. 90% or more is zero)
             num_nonzero = len(current_patch[current_patch > 0])
             if num_nonzero/(patch_width*patch_height) <= .10:
                 continue
 
             # Construct new patch from the data
+
             new_patch = Patch(data=current_patch, center_coords=np.array([[center_pixel_x], [center_pixel_y], [center_pixel_z]]))
 
             # Append to what we've collected so far
             all_patches.append(new_patch)
 
     # Randomly choose num_patches from all_patches, return this array
+
     num_patches = min(num_samples, len(all_patches))
     rand_patches = np.random.choice(all_patches, replace=False, size=num_patches)
     return rand_patches
+    # return all_patches
 
 
 def getFinalVote(all_votes, num_trees):
@@ -107,6 +116,8 @@ def getFinalVote(all_votes, num_trees):
 
 
 def getClusters(all_votes):
+
+    print "Getting Clusters"
     # Number of parameters for theta: center coordinates, and orientation
     # theta_size = 6
     
@@ -127,8 +138,14 @@ def getClusters(all_votes):
     # Radius for clustering votes
     max_distance_to_centroid = (average_face_diameter ** 2)
 
+    print len(all_votes)
+
+    counter = 0
     # For every vote
     for vote in all_votes:
+        if (counter % 1000) == 0:
+            print counter
+        counter = counter + 1
         cluster_found = False
         best_distance = float('Inf')
         # Index of best cluster
@@ -136,12 +153,13 @@ def getClusters(all_votes):
 
         # For every cluster
         for centroid_index in range(len(current_centroids)):
-            if found: break
+            if cluster_found: break
             centroid = current_centroids[centroid_index]
             difference = centroid.theta_center - vote.theta_center
             distance = np.sum(difference ** 2)
 
-            if distance >= max_distance_to_centroid: continue
+            if distance >= max_distance_to_centroid: 
+                continue
 
             # Found a best cluster
             best_cluster = centroid_index
@@ -150,8 +168,8 @@ def getClusters(all_votes):
             current_clusters[best_cluster] = np.append(current_clusters[best_cluster], vote)
 
             # Compute centroid parameters
-            average_center = np.mean([vote.theta_center for vote in current_clusters[best_cluster]])
-            average_angles = np.mean([vote.theta_angles for vote in current_clusters[best_cluster]])
+            average_center = np.reshape(np.mean(np.hstack(tuple([my_vote.theta_center for my_vote in current_clusters[best_cluster]])), axis=1), [3, 1])
+            average_angles = np.reshape(np.mean(np.hstack(tuple([my_vote.theta_angles for my_vote in current_clusters[best_cluster]])), axis=1), [3, 1])
 
             current_centroids[best_cluster] = Vote(theta_center=average_center, theta_angles=average_angles)
 
@@ -166,6 +184,8 @@ def getClusters(all_votes):
 
 
 def performMeanShift(current_clusters, current_centroids, threshold):
+
+    print "Performing Mean Shift"
     max_mean_shift_iters = 10
 
     # List of clusters, each of which is an np.array of votes
@@ -199,29 +219,32 @@ def performMeanShift(current_clusters, current_centroids, threshold):
                     new_cluster = np.append(new_cluster, vote)
 
                 # Compute means of theta centers for each vote in the new cluster
-                average_center = np.mean([vote.theta_center for vote in new_cluster])
-                average_angles = np.mean([vote.theta_angles for vote in new_cluster])
+                
+                average_center = np.reshape(np.mean(np.hstack(tuple([my_vote.theta_center for my_vote in new_cluster])), axis = 1), [3, 1])
+                average_angles = np.reshape(np.mean(np.hstack(tuple([my_vote.theta_angles for my_vote in new_cluster])), axis = 1), [3, 1])
 
                 new_mean = Vote(theta_center=average_center, theta_angles=average_angles)
                 old_mean = current_centroids[centroid_index]
                 
                 difference_center = new_mean.theta_center - old_mean.theta_center
-                difference_angles = new_mean.theta_angles - old_mean.theta_angles
 
-                difference_mean = (difference_center ** 2) + (difference_angles ** 2)
+                difference_mean = np.sum((difference_center ** 2))
 
                 current_centroids[centroid_index] = new_mean
 
                 if difference_mean < 1: break
 
             mean_shift_clusters.append(new_cluster)
-            mean_shift_centroids.append(current_centroids[centroid_index])
+            mean_shift_centroids = np.append(mean_shift_centroids, current_centroids[centroid_index])
 
     return mean_shift_clusters, mean_shift_centroids
 
 
 # Computes the final parameters
 def computeFinalParams(mean_shift_clusters, mean_shift_centroids, threshold):
+
+    print "Computing final parameters"
+
     final_clusters = []
     final_centroids = np.array([])
 

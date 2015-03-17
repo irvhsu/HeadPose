@@ -9,7 +9,7 @@ from vote import Vote
 ##############################################################
 
 class Tree:
-  def __init__(self, patches, max_depth=10, min_patches=5, tau_range=[-10, 10], rate_change=10, root_node=None):
+  def __init__(self, patches, max_depth=15, min_patches=20, tau_range=[-100, 100], rate_change=10, root_node=None):
     
     # Stores all of the patches
     self.patches = patches
@@ -27,7 +27,7 @@ class Tree:
     self.rate_change = rate_change
     
     # Number of randomly generated binary tests per node
-    self.num_tests = 1000
+    self.num_tests = 20000
 
     # Create a new tree if no tree is passed in
     self.root_node = root_node
@@ -93,6 +93,7 @@ class Tree:
       if current_info_gain >= best_info_gain:
         best_info_gain = current_info_gain
         best_binary_test = current_test
+    print "Optimal Tau: ", best_binary_test['tau']
     return best_binary_test
 
 
@@ -107,11 +108,17 @@ class Tree:
   # Generates a random subrectangular region F of a patch, by defining the upper left and bottom right corners.
   # The location of the upper left corner is used as the lower bound for the location of the bottom right corner.
   def computeRandomF(self):
+
+    # Width and height of all patches are the same, so look at the first one (WLOG)
     max_x_value = self.patches[0].width
     max_y_value = self.patches[0].height
     upper_corner = [np.random.randint(0, max_x_value), np.random.randint(0, max_y_value)]
-    bottom_corner = [np.random.randint(upper_corner[0], max_x_value), \
-                     np.random.randint(upper_corner[1], max_y_value)]
+
+    max_x_value_capped = min(upper_corner[0] + 40, max_x_value)
+    max_y_value_capped = min(upper_corner[1] + 40, max_y_value)
+
+    bottom_corner = [np.random.randint(upper_corner[0], max_x_value_capped), \
+                     np.random.randint(upper_corner[1], max_y_value_capped)]
     return np.array([upper_corner, bottom_corner])
       
   
@@ -166,14 +173,19 @@ class Tree:
 
     # Return the current node's parameters if and only if all the patches in the leaf
     # are from the head and if trace(cov) < threshold
+
     offset_cov, angle_cov = current_node.getCovariances()
 
     cov_trace_sum = np.trace(offset_cov) + np.trace(angle_cov)
 
-    if current_node.getPercentFromHead() == 1 and cov_trace_sum < threshold:
+    if current_node.getPercentFromHead() >= .001 and cov_trace_sum < threshold:
       # Get mean for theta offsets and theta angles
       mean_offset, mean_angles = current_node.getMeans()
+      mean_offset = np.reshape(mean_offset, [3, 1])
+      mean_angles = np.reshape(mean_angles, [3, 1])
       predicted_center = mean_offset + patch.center_coords
+
+
       vote = Vote(theta_center=predicted_center, theta_angles=mean_angles)
       return vote
     return None
