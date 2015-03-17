@@ -78,8 +78,8 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
             center_pixel_z = depth_image[u, v] # Depth
             if center_pixel_z <= 0:
                 continue
-            center_pixel_x = center_pixel_z * (v - K[0, 2])/K[0, 0]
-            center_pixel_y = center_pixel_z * (u - K[1, 2])/K[1, 1]
+            center_pixel_x = center_pixel_z * float((v - K[0, 2]))/float(K[0, 0])
+            center_pixel_y = center_pixel_z * float((u - K[1, 2]))/float(K[1, 1])
 
             # Get vector pointing from center of patch to center of head
             theta_patch_center = np.array([center_pixel_x, center_pixel_y, center_pixel_z])

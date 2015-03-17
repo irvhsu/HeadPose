@@ -70,19 +70,19 @@ def getPatches(depth_image, K):
             current_patch = depth_image[i*stride : (i*stride + patch_height), j*stride : (j*stride + patch_width)]
 
             # Get (u, v) coordinates of the center of the patch
-            u = i*stride + np.floor(patch_height/2)
-            v = j*stride + np.floor(patch_width/2)
+            u = i*stride + np.floor(float(patch_height)/2.)
+            v = j*stride + np.floor(float(patch_width)/2.)
 
             # Calculate the xyz-location of the center pixel of the patch
             center_pixel_z = depth_image[u, v] # Depth
             if center_pixel_z <= 0:
                 continue
-            center_pixel_x = center_pixel_z * (v - K[0, 2])/K[0, 0]
-            center_pixel_y = center_pixel_z * (u - K[1, 2])/K[1, 1]
+            center_pixel_x = center_pixel_z * float((v - K[0, 2]))/float(K[0, 0])
+            center_pixel_y = center_pixel_z * float((u - K[1, 2]))/float(K[1, 1])
     
             # Ignore patches consisting of less than 10% data (i.e. 90% or more is zero)
             num_nonzero = float(len(current_patch[current_patch > 0]))
-            if num_nonzero/(patch_width*patch_height) <= .10:
+            if num_nonzero/(float(patch_width*patch_height)) <= .10:
                 continue
 
             # Construct new patch from the data
@@ -106,9 +106,9 @@ def getFinalVote(all_votes, num_trees):
     current_clusters, current_centroids = getClusters(all_votes)
     
     stride = 1.0
-    beta = 400
+    beta = 400.
     # Threshold denoting number of votes a cluster should have to be considered
-    threshold = beta * num_trees/(stride ** 2)
+    threshold = beta * float(num_trees)/float((stride ** 2))
 
     mean_shift_clusters, mean_shift_centroids = performMeanShift(current_clusters, current_centroids, threshold)
     final_clusters, final_centroids = computeFinalParams(mean_shift_clusters, mean_shift_centroids, threshold)
@@ -199,7 +199,7 @@ def performMeanShift(current_clusters, current_centroids, threshold):
 
     # Radius of sphere for mean shift: must be equal to 1/6 of the
     # average face diameter
-    fraction_of_face = 1./6
+    fraction_of_face = 1./6.
     mean_shift_radius2 = (fraction_of_face * average_face_diameter)**2
     
 

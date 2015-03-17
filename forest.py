@@ -38,7 +38,7 @@ class Forest:
     for i in range(self.num_trees):
       print "Tree: ", i
       # Divide data evenly between trees
-      num_train_patches = np.ceil(num_patches/self.num_trees)
+      num_train_patches = np.ceil(float(num_patches)/float(self.num_trees))
 
       # Get random subset of data of appropriate size
       random_indices = np.random.choice(range(num_patches), replace=False, size=num_train_patches)

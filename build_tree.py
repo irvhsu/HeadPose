@@ -13,7 +13,7 @@ def buildTree(folderNumbers, treeID, numTrees=10):
   
   # Determine the number of patches to train the tree on
   num_patches = len(all_patches)
-  num_train_patches = np.ceil(num_patches/numTrees)
+  num_train_patches = np.ceil(float(num_patches)/numTrees)
   
   # Get random subset of all patches
   random_indices = np.random.choice(range(num_patches), replace=False, size=num_train_patches)

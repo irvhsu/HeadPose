@@ -83,11 +83,11 @@ def readGroundTruth(pathname):
 		line_number += 1
 
 	# Convert rotation matrix into angles
-	theta_angles[0] = np.arctan(r_mat[2, 1]/r_mat[2, 2])# Pitch...?
-	theta_angles[1] = -np.arcsin(r_mat[2, 0]) # Yaw
-	theta_angles[2] = np.arctan(r_mat[1, 0]/r_mat[0,0]) # Roll
+	theta_angles[0] = np.arctan(float(r_mat[2, 1])/float(r_mat[2, 2])) # Pitch
+	theta_angles[1] = -np.arcsin(float(r_mat[2, 0])) # Yaw
+	theta_angles[2] = np.arctan(float(r_mat[1, 0])/float(r_mat[0,0])) # Roll
 
-	return theta_center, theta_angles * 180/np.pi
+	return theta_center, theta_angles * 180./np.pi
 
 
 # Tests the functionality of readGroundTruth, and prints results

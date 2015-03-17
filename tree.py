@@ -127,7 +127,7 @@ class Tree:
   def computeInfoGain(self, current_node, left_child, right_child, depth):
     UC = self.computeUC(left_child, right_child)
     UR = self.computeUR(current_node, left_child, right_child)
-    return (UC + (1 - np.exp(-depth/self.rate_change)*UR))
+    return (UC + (1 - np.exp(-float(depth)/float(self.rate_change))*UR))
 
 
   # Computes the classification measure U_C to evaluate the goodness of a split
