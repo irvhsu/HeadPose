@@ -12,7 +12,7 @@ from vote import Vote
 random_forest = np.load('../small_forest.npy')[0]
 
 # get depth image of 100th frame, second folder
-depth_pathname = getPathname(2, 100, "_depth.bin")
+depth_pathname = getPathname(1, 100, "_depth.bin")
 depth_pathname = '../' + depth_pathname
 depth_image = readDepthImage(depth_pathname)
 
@@ -20,12 +20,12 @@ depth_image = readDepthImage(depth_pathname)
 if depth_image is not None:
 
 	# Get ground truth center and angles
-	gt_pathname = getPathname(2, 100, "_pose.txt")
+	gt_pathname = getPathname(1, 100, "_pose.txt")
 	gt_pathname = '../' + gt_pathname
 	gt_center, gt_angles = readGroundTruth(gt_pathname)
 
 	# Read camera matrix
-	K = readCameraMatrix2(2)
+	K = readCameraMatrix2(1)
 
 	# Obtain vote(s) from the forest (multiple if more than one head is present)
 	final_votes = getForestEstimate(random_forest, depth_image, K)

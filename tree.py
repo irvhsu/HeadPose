@@ -2,7 +2,7 @@ import numpy as np
 import random
 from patch import Patch
 from node import Node
-from vote import Vote
+from Testing_Code.vote import Vote
 
 ##############################################################
 # Class: Tree
@@ -177,6 +177,7 @@ class Tree:
     offset_cov, angle_cov = current_node.getCovariances()
 
     cov_trace_sum = np.trace(offset_cov) + np.trace(angle_cov)
+    print cov_trace_sum
 
     if current_node.getPercentFromHead() >= .001 and cov_trace_sum < threshold:
       # Get mean for theta offsets and theta angles
