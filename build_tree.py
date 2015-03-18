@@ -6,6 +6,7 @@ def buildTree(folderNumbers, treeID, outputFolder, numTrees=10):
   for folderNumber in folderNumbers: 
     # Filename to read patches from
     # filename = "patches_" + str(folderNumber) + ".npy"
+
     filename = "patches_" + str(folderNumber) + ".npy"
     curr_patches = np.load(filename)
     all_patches.append(curr_patches)

@@ -96,6 +96,8 @@ class Tree:
         best_info_gain = current_info_gain
         best_binary_test = current_test
         if best_binary_test is not None:
+
+          print "Optimal Tau: ", best_binary_test['tau']
           print "Best Info Gain: ", best_info_gain
     return best_binary_test
 
