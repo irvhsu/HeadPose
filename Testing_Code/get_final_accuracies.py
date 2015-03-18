@@ -33,6 +33,7 @@ def getFinalAccuracies(forest_path, folder_num):
         gt_pathname = getPathname(folder_num, frame_num, "_pose.txt")
         gt_pathname = '../' + gt_pathname
         gt_center, gt_angles = readGroundTruth(gt_pathname)
+        gt_center = np.reshape(gt_center, [3, 1])
 
         # Read camera matrix
         K = readCameraMatrix2(folder_num)

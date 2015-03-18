@@ -62,6 +62,7 @@ def testReadDepthImage(folder, frame):
 	path = getPathname(folder, frame, "_depth.bin")
 	img = readDepthImage(path)
 	print len(img[img > 0])
+	print len(img[img < 0])
 
 
 # Read ground truth file and return both theta_center and theta_angles

@@ -13,7 +13,7 @@ def getForestEstimate(forest, depth_image, K):
     print "Num Patches Extracted: ", len(image_patches)
 
     # The max level of trace of the variance a leaf can have 
-    max_trace_variance = 50000
+    max_trace_variance = 500
 
     # The list that will hold all of the votes based on these patches
     all_votes = []
@@ -158,8 +158,8 @@ def getClusters(all_votes):
             difference = centroid.theta_center - vote.theta_center
             distance = np.sum(difference ** 2)
 
-            if distance >= max_distance_to_centroid: 
-                continue
+            # if distance >= max_distance_to_centroid: 
+            #     continue
 
             # Found a best cluster
             best_cluster = centroid_index
@@ -184,7 +184,7 @@ def getClusters(all_votes):
 
 
 def performMeanShift(current_clusters, current_centroids, threshold):
-
+    print "Current Cluster length: ", len(current_clusters)
     print "Performing Mean Shift"
     max_mean_shift_iters = 10
 
@@ -215,7 +215,7 @@ def performMeanShift(current_clusters, current_centroids, threshold):
                 for vote in current_clusters[centroid_index]:
                     difference = centroid.theta_center - vote.theta_center
                     distance = np.sum(difference ** 2)                    
-                    if distance >= mean_shift_radius2: continue
+                    # if distance >= mean_shift_radius2: continue
                     new_cluster = np.append(new_cluster, vote)
 
                 # Compute means of theta centers for each vote in the new cluster
@@ -244,13 +244,14 @@ def performMeanShift(current_clusters, current_centroids, threshold):
 def computeFinalParams(mean_shift_clusters, mean_shift_centroids, threshold):
 
     print "Computing final parameters"
+    print "Mean Shift Cluster length: ", len(mean_shift_clusters)
 
     final_clusters = []
     final_centroids = np.array([])
 
     for cluster_index in range(len(mean_shift_clusters)):
         cluster = mean_shift_clusters[cluster_index]
-        if len(cluster) < threshold: continue
+        # if len(cluster) < threshold: continue
         centroid = mean_shift_centroids[cluster_index]
         final_clusters.append(cluster)
         final_centroids = np.append(final_centroids, centroid)

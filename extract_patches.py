@@ -52,7 +52,7 @@ def getPatchesFromImage(depth_image, theta_center, theta_angles, K):
     stride = 1
 
     # Threshold used for heuristic (mm)
-    threshold = 50
+    threshold = 100
 
     # Number of samples (same for both positive and negative patches)
     num_samples = 10

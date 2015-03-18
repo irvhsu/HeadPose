@@ -27,7 +27,7 @@ class Tree:
     self.rate_change = rate_change
     
     # Number of randomly generated binary tests per node
-    self.num_tests = 20000
+    self.num_tests = 1000
 
     # Create a new tree if no tree is passed in
     self.root_node = root_node
@@ -45,7 +45,9 @@ class Tree:
   # Given a node, constructs the subtree starting at that node
   def constructTreeHelper(self, current_node, current_depth):
     # Stop if current depth is equal to the maximum depth or if too few patches in the current node
+    print "Number of patches in curr_node: ", len(current_node.patches)
     print "Current Depth: ", current_depth
+    print "Percent From Head: ", current_node.getPercentFromHead()
     if current_depth == self.max_depth or len(current_node.patches) <= self.min_patches:
       current_node.isLeaf = True
       return current_node
@@ -55,7 +57,7 @@ class Tree:
     current_node.setBinaryTest(best_binary_test)
 
     # If there is no best binary test
-    if not best_binary_test:
+    if best_binary_test is None:
       current_node.isLeaf = True
       return current_node
 
@@ -93,8 +95,8 @@ class Tree:
       if current_info_gain >= best_info_gain:
         best_info_gain = current_info_gain
         best_binary_test = current_test
-    if best_binary_test is not None:
-      print "Optimal Tau: ", best_binary_test['tau']
+        if best_binary_test is not None:
+          print "Best Info Gain: ", best_info_gain
     return best_binary_test
 
 
@@ -127,7 +129,7 @@ class Tree:
   def computeInfoGain(self, current_node, left_child, right_child, depth):
     UC = self.computeUC(left_child, right_child)
     UR = self.computeUR(current_node, left_child, right_child)
-    return (UC + (1 - np.exp(-float(depth)/float(self.rate_change))*UR))
+    return (UC + (1 - np.exp(-float(depth)/float(self.rate_change)))*UR)
 
 
   # Computes the classification measure U_C to evaluate the goodness of a split
@@ -136,23 +138,38 @@ class Tree:
     PR_size = float(len(right_child.patches))
     left_percent_from_head = left_child.getPercentFromHead()
     right_percent_from_head = right_child.getPercentFromHead()
+    # print "Left Percent From Head: ", left_percent_from_head
+    # print "right_percent_from_Head: ", right_percent_from_head
 
-    numer = PL_size*(left_percent_from_head*np.log(left_percent_from_head) + (1 - left_percent_from_head)*np.log(1 - left_percent_from_head))+ \
-            PR_size*(right_percent_from_head*np.log(right_percent_from_head) + (1 - right_percent_from_head)*np.log(1 - right_percent_from_head))
+    numer_left = PL_size*(left_percent_from_head*np.log(left_percent_from_head) + (1 - left_percent_from_head)*np.log(1 - left_percent_from_head))
+    numer_right = PR_size*(right_percent_from_head*np.log(right_percent_from_head) + (1 - right_percent_from_head)*np.log(1 - right_percent_from_head))
+    if np.isnan(numer_left):
+      numer_left = 0
+    if np.isnan(numer_right):
+      numer_right = 0
+    numer = numer_left + numer_right
     denom = PL_size + PR_size
-
+    # print "UC: ", (float(numer)/float(denom))
     return (float(numer)/float(denom))
 
   # Computes the regression measure U_R to evaluate the goodness of a split
   def computeUR(self, current_node, left_child, right_child):
     self_entropy = current_node.computeEntropy()
+    # print "Self entropy: ", self_entropy
     left_entropy = left_child.computeEntropy()
     right_entropy = right_child.computeEntropy()
+    # print "Left Entropy: ", left_entropy
+    # print "Right Entropy: ", right_entropy
 
     w_l = float(len(left_child.patches))/float(len(current_node.patches))
     w_r = float(len(right_child.patches))/float(len(current_node.patches))
+    # print "Ratio Patches in Left: ", w_l
+    # print "Ratio Patches in Right: ", w_r
+    # print "Number of patches in Left: ", len(left_child.patches)
+    # print "Number of patches in Right: ", len(right_child.patches)
 
     info_gain = self_entropy - (w_l*left_entropy + w_r*right_entropy)
+    # print "UR: ", info_gain
     return info_gain
   
 
@@ -178,9 +195,9 @@ class Tree:
     offset_cov, angle_cov = current_node.getCovariances()
 
     cov_trace_sum = np.trace(offset_cov) + np.trace(angle_cov)
-    print cov_trace_sum
+    # print cov_trace_sum
 
-    if current_node.getPercentFromHead() >= .001 and cov_trace_sum < threshold:
+    if current_node.getPercentFromHead() >= .98 and cov_trace_sum < threshold:
       # Get mean for theta offsets and theta angles
       mean_offset, mean_angles = current_node.getMeans()
       mean_offset = np.reshape(mean_offset, [3, 1])

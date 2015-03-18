@@ -1,10 +1,11 @@
 import numpy as np
 from tree import Tree
 
-def buildTree(folderNumbers, treeID, numTrees=10):
+def buildTree(folderNumbers, treeID, outputFolder, numTrees=10):
   all_patches = []
   for folderNumber in folderNumbers: 
-  # Filename to read patches from
+    # Filename to read patches from
+    # filename = "patches_" + str(folderNumber) + ".npy"
     filename = "patches_" + str(folderNumber) + ".npy"
     curr_patches = np.load(filename)
     all_patches.append(curr_patches)
@@ -23,6 +24,6 @@ def buildTree(folderNumbers, treeID, numTrees=10):
   curr_tree = Tree(patches=train_patches)
   
   # Write tree to a file
-  outFile = "tree_combined_" + str(treeID) + ".npy"
+  outFile = outputFolder + "/tree_" + str(treeID) + ".npy"
   np.save(outFile, curr_tree)
 
